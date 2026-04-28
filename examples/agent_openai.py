@@ -4,8 +4,8 @@ Minimal example: OpenAI agent with persistent memory via APIBASE.
 Setup:
     pip install apibase openai
 
-APIBASE table required (e.g. table 3):
-    id_memory | key | value | agent
+APIBASE table required (e.g. table 30):
+    id_memory | memory | value | agent
 """
 import os
 from openai import OpenAI
@@ -22,6 +22,7 @@ oai    = OpenAI()
 SYSTEM = """You are a helpful assistant with persistent memory.
 When the user tells you something to remember, call remember_fact().
 When you need to recall something, call recall_fact().
+Memory keys must be short, lowercase, no underscores (e.g. "username", "userlang").
 """
 
 tools = [

@@ -28,10 +28,10 @@ from apibase import ApibaseClient, Memory
 client = ApibaseClient("https://apibase.work", "your-token")
 mem    = Memory(client, table_id=30)
 
-mem.remember("user_name", "Pierre")
-mem.recall("user_name")    # → "Pierre"
-mem.forget("user_name")
-mem.search("Pierre")       # → matching records
+mem.remember("username", "Pierre")
+mem.recall("username")    # → "Pierre"
+mem.forget("username")
+mem.search("Pierre")      # → matching records
 ```
 
 Every memory is a row in a real table. A human can open the APIBASE interface, read it, correct it, add to it — without touching code.
@@ -92,7 +92,7 @@ worker = HiveClient("https://apibase.work", hive_token)
 mem_w  = Memory(worker, table_id=30, basekey="acme", agent="worker-1")
 
 worker_mem.remember("finding", "Revenue spike on 2026-04-15")
-boss_mem.search("spike")   # → found
+boss_mem.search("spike")    # → found
 ```
 
 Every write is visible to humans in real time through the APIBASE interface. You know which agent wrote what, when, and why.

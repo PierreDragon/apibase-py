@@ -29,8 +29,8 @@ worker_client = HiveClient(BASE, WORKER_TOKEN)
 worker_mem    = Memory(worker_client, table_id=TABLE_ID, basekey=BASEKEY, agent='worker-1')
 
 # Worker stores a finding
-worker_mem.remember('analysis_result', 'Revenue increased 12% in Q1')
-worker_mem.remember('anomaly_detected', 'Spike on 2026-04-15')
+worker_mem.remember('analysisresult', 'Revenue increased 12% in Q1')
+worker_mem.remember('anomaly', 'Spike on 2026-04-15')
 
 # Boss reads everything (all agents)
 boss_all = boss_mem.all()
@@ -42,6 +42,7 @@ print('Anomalies found:', hits)
 
 # Boss writes a directive
 boss_mem.remember('directive', 'Focus on April anomaly next')
+
 
 # Worker reads boss directive
 print('Directive:', worker_mem.recall('directive'))
