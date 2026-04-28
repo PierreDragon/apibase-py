@@ -1,0 +1,13 @@
+[build-system]
+requires = ["setuptools>=61"]
+build-backend = "setuptools.backends.legacy:build"
+
+[project]
+name = "apibase"
+version = "0.1.0"
+description = "Persistent memory layer for AI agents, powered by APIBASE"
+requires-python = ">=3.9"
+dependencies = ["requests>=2.28"]
+
+[project.urls]
+Homepage = "https://apibase.work"
