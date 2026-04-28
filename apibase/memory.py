@@ -33,7 +33,7 @@ class Memory:
         client: ApibaseClient | HiveClient,
         table_id: int,
         basekey: str = None,
-        key_col: str = 'key',
+        key_col: str = 'memory',
         value_col: str = 'value',
         agent: str = None,
     ):
