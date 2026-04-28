@@ -35,15 +35,17 @@ class Memory:
         basekey: str = None,
         key_col: str = 'memory',
         value_col: str = 'value',
+        agent_col: str = 'agent',
         agent: str = None,
     ):
-        self._client  = client
-        self._table   = table_id
-        self._basekey = basekey
-        self._key_col = key_col
-        self._val_col = value_col
-        self._agent   = agent
-        self._pk_col  = None
+        self._client    = client
+        self._table     = table_id
+        self._basekey   = basekey
+        self._key_col   = key_col
+        self._val_col   = value_col
+        self._agent_col = agent_col
+        self._agent     = agent
+        self._pk_col    = None
 
         if isinstance(client, HiveClient) and basekey is None:
             raise ValueError('basekey is required when using HiveClient')
@@ -55,7 +57,7 @@ class Memory:
     def remember(self, key: str, value: str, **extra) -> dict:
         record = {self._key_col: key, self._val_col: str(value)}
         if self._agent:
-            record['agent'] = self._agent
+            record[self._agent_col] = self._agent
         record.update(extra)
 
         existing = self._find(key)
@@ -80,7 +82,7 @@ class Memory:
         if not isinstance(rows, list):
             rows = [rows] if rows else []
         if self._agent:
-            rows = [r for r in rows if r.get('agent') == self._agent]
+            rows = [r for r in rows if r.get(self._agent_col) == self._agent]
         return rows
 
     def search(self, text: str) -> list[dict]:
