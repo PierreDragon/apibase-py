@@ -142,20 +142,20 @@ pip install -e .
 
 **3. Generate a token** (scope: `full`) in your account settings.
 
-**4. Note your table ID** — visible in the Table overview panel.
-
-**5. Run:**
+**4. Run:**
 
 ```python
 from apibase import ApibaseClient, Memory
 
 client = ApibaseClient("https://apibase.work", "your-token")
-mem    = Memory(client, table_id=YOUR_TABLE_ID, agent_col="username", agent="myagent")
+mem    = Memory(client, table_id=30, agent_col="username", agent="myagent")
 
 mem.remember("goal", "Summarize the quarterly report")
 print(mem.recall("goal"))   # → "Summarize the quarterly report"
 print(mem.all())            # → all memories for this agent
 ```
+
+> `table_id=30` is fixed — `memorys` is globally registered as GID.30 on apibase.work. Every user who creates this table gets the same ID automatically.
 
 ---
 

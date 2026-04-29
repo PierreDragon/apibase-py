@@ -338,7 +338,7 @@ mem.<span class="fn">search</span>(<span class="st">"spike"</span>)  <span class
       <div class="step-num">3</div>
       <div class="step-content">
         <h4>Generate a token</h4>
-        <p>Scope: <code>full</code>. Note your table ID from the Table overview panel.</p>
+        <p>Scope: <code>full</code>. That's all — no need to note any table ID.</p>
       </div>
     </div>
     <div class="step">
@@ -353,11 +353,14 @@ mem.<span class="fn">search</span>(<span class="st">"spike"</span>)  <span class
 <pre><code><span class="kw">from</span> apibase <span class="kw">import</span> ApibaseClient, Memory
 
 client = <span class="fn">ApibaseClient</span>(<span class="st">"https://apibase.work"</span>, <span class="st">"your-token"</span>)
-mem    = <span class="fn">Memory</span>(client, table_id=YOUR_TABLE_ID, agent_col=<span class="st">"username"</span>, agent=<span class="st">"myagent"</span>)
+mem    = <span class="fn">Memory</span>(client, table_id=<span class="nb">30</span>, agent_col=<span class="st">"username"</span>, agent=<span class="st">"myagent"</span>)
 
 mem.<span class="fn">remember</span>(<span class="st">"goal"</span>, <span class="st">"Summarize the quarterly report"</span>)
 <span class="nb">print</span>(mem.<span class="fn">recall</span>(<span class="st">"goal"</span>))   <span class="cm"># → "Summarize the quarterly report"</span>
 <span class="nb">print</span>(mem.<span class="fn">all</span>())            <span class="cm"># → all memories for this agent</span></code></pre>
+  <p style="font-size:0.85rem; color:#64748b; margin-top:8px;">
+    <code>table_id=30</code> est fixe — <code>memorys</code> est enregistrée globalement comme GID.30 sur apibase.work. Tous les utilisateurs qui créent cette table obtiennent automatiquement le même ID.
+  </p>
 </section>
 
 <!-- API REFERENCE -->
