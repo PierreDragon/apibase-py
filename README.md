@@ -1,26 +1,10 @@
 # apibase-py
 
-Python SDK for [APIBASE](https://apibase.work) — persistent, human-readable memory for AI agents.
+**AI agents forget everything. APIBASE gives them memory that humans can read.**
 
----
+Every session, your agent starts from zero. It doesn't remember the user's name, last week's findings, or the decision it made yesterday. You build workarounds — prompt stuffing, vector stores, JSON files — and none of them let you see what the agent actually knows.
 
-## The problem with AI agent memory
-
-Today, AI agents forget everything between sessions. The workarounds are painful:
-
-- **Vector stores** — embeddings that humans can't read or correct
-- **JSON files** — flat, no structure, no querying
-- **Nothing** — the most common solution
-
-When an agent makes a wrong assumption, you can't fix it. You can't even see it.
-
----
-
-## APIBASE as agent memory
-
-APIBASE is a structured data platform with a REST API. Each user has their own base — a set of typed tables with named columns, accessible via predictable URLs.
-
-This SDK turns APIBASE into **persistent memory for AI agents**:
+APIBASE is different. Every memory is a row in a real table. You open it, read it, fix it, add to it. No special tools. No embeddings. Just a table.
 
 ```python
 from apibase import ApibaseClient, Memory
@@ -29,12 +13,26 @@ client = ApibaseClient("https://apibase.work", "your-token")
 mem    = Memory(client, table_id=30)
 
 mem.remember("username", "Pierre")
-mem.recall("username")    # → "Pierre"
+mem.recall("username")     # → "Pierre"
 mem.forget("username")
-mem.search("Pierre")      # → matching records
+mem.search("Pierre")       # → matching records
 ```
 
-Every memory is a row in a real table. A human can open the APIBASE interface, read it, correct it, add to it — without touching code.
+That's it. The agent remembers. You can see it.
+
+---
+
+## Why this matters
+
+Today, AI agent memory is either opaque or nonexistent.
+
+**Vector stores** hold embeddings — mathematical representations that no human can read or correct. When the agent builds a wrong belief, you can't fix it because you can't see it.
+
+**JSON files** are flat. No structure, no querying, no history.
+
+**Nothing** — the most common solution. Every session is a blank slate.
+
+APIBASE stores agent memory in structured tables with named columns. A human can open the interface, see every memory, correct a wrong assumption, inject a new fact, or trace exactly what the agent knew at any point in time.
 
 **The agent and the human work on the same data.**
 
@@ -42,7 +40,7 @@ Every memory is a row in a real table. A human can open the APIBASE interface, r
 
 ## Why AI agents love TLC addressing
 
-APIBASE uses a deterministic address format for every piece of data:
+APIBASE uses a deterministic address for every piece of data:
 
 ```
 T{table} / L{line} / C{column}
@@ -50,77 +48,76 @@ T{table} / L{line} / C{column}
 
 Examples:
 ```
-T30/L1/C2        → cell: memorys, line 1, column "memory"
-T30/L            → all records in memorys
-T30/L/C2/O1?V=x  → records where memory = x
+T30/L1/C2          → one cell: memorys, line 1, column "memory"
+T30/L              → all records in memorys
+T30/L/C2/O1?V=x   → records where memory = x
 ```
 
-No ambiguity. No hallucination. An LLM can construct a valid APIBASE query without guessing — the address space is fully enumerable and self-consistent.
+No ambiguity. No hallucination. An LLM can construct a valid APIBASE query without guessing — the address space is fully enumerable and self-consistent. This is why agents navigate it naturally.
 
 ---
 
-## HIVE — multi-agent memory with a boss
+## HIVE — a fleet of agents with a shared memory
 
 APIBASE includes a HIVE system for multi-agent architectures.
 
-Each agent has its own base. A **boss agent** owns the master base and grants worker agents access to specific tables via ACL — per table, per operation (`read / add / edit / delete`).
+A **boss agent** owns the master base. Worker agents connect to it via a shared `basekey` and write their findings directly into the boss's memory. The boss reads everything. The human sees everything.
 
 ```
 Boss agent (full token)
     └── owns the master base
-    └── controls HIVE ACL
-    └── reads all agent outputs
+    └── controls who can read, write, edit
 
-Worker agent A (hive token, ACL: add on T30)
-    └── writes findings into boss's memorys table
+Worker agent "research" (hive token, ACL: read + add)
+    └── writes findings into boss memory
+    └── cannot edit or delete what the boss wrote
 
-Worker agent B (hive token, ACL: read on T30)
+Worker agent "analyst" (hive token, ACL: read only)
     └── reads directives from boss
+    └── cannot write
 ```
-
-The SDK handles both:
 
 ```python
 from apibase import ApibaseClient, HiveClient, Memory
 
-# Boss — full access to own base
+# Boss reads and writes its own base
 boss   = ApibaseClient("https://apibase.work", full_token)
-mem    = Memory(boss, table_id=30, agent="boss")
+mem    = Memory(boss, table_id=30, agent_col="username", agent="boss")
 
-# Worker — hive access, writes into boss's base
+# Worker writes into boss base via HIVE
 worker = HiveClient("https://apibase.work", hive_token)
-mem_w  = Memory(worker, table_id=30, basekey="acme", agent="worker-1")
+mem_w  = Memory(worker, table_id=30, basekey="claude", agent_col="username", agent="research")
 
-worker_mem.remember("finding", "Revenue spike on 2026-04-15")
-boss_mem.search("spike")    # → found
+mem_w.remember("finding01", "Revenue spike detected on 2026-04-15")
+mem.search("spike")   # boss finds it immediately
 ```
 
-Every write is visible to humans in real time through the APIBASE interface. You know which agent wrote what, when, and why.
+Every write is visible in real time through the APIBASE interface. You know which agent wrote what, when, and why.
 
 ---
 
 ## Human-in-the-loop by design
 
-This is not an observability feature bolted on after the fact. It is the architecture.
+This is not an observability layer bolted on after the fact. It is the architecture.
 
-Agent memory lives in a table. Humans read tables. You can:
+Agent memory lives in a table. Humans read tables. At any moment you can:
 
-- **Correct** a wrong belief the agent stored
-- **Inject** a fact the agent needs to know
-- **Delete** a toxic memory before it propagates
-- **Audit** the full reasoning trail of a multi-agent run
+- **Correct** a wrong belief before it propagates
+- **Inject** a fact the agent needs to know right now
+- **Delete** a toxic memory before it influences decisions
+- **Audit** the full reasoning trail of an entire multi-agent run
 
-No special tooling. No vector database dashboards. Just a table.
+No dashboards. No vector database tooling. Just a table you can open in a browser.
 
 ---
 
 ## Installation
 
 ```bash
-pip install apibase
+pip install requests
 ```
 
-Or from source:
+Then clone and install locally:
 
 ```bash
 git clone https://github.com/PierreDragon/apibase-py
@@ -132,19 +129,32 @@ pip install -e .
 
 ## Quick start
 
-1. Create an account at [apibase.work](https://apibase.work)
-2. Create a table `memorys` with columns: `id_memory | memory | value | agent`
-3. Generate a token (scope: `full`)
-4. Run:
+**1. Create an account at [apibase.work](https://apibase.work)**
+
+**2. Create a table `memorys` with these columns in order:**
+
+| # | Column | Role |
+|---|--------|------|
+| 1 | `id_memory` | Primary key |
+| 2 | `memory` | The memory key |
+| 3 | `username` | Which agent stored it |
+| 4 | `value` | The stored value |
+
+**3. Generate a token** (scope: `full`) in your account settings.
+
+**4. Note your table ID** — visible in the Table overview panel.
+
+**5. Run:**
 
 ```python
 from apibase import ApibaseClient, Memory
 
 client = ApibaseClient("https://apibase.work", "your-token")
-mem    = Memory(client, table_id=YOUR_TABLE_ID)
+mem    = Memory(client, table_id=YOUR_TABLE_ID, agent_col="username", agent="myagent")
 
 mem.remember("goal", "Summarize the quarterly report")
-print(mem.recall("goal"))
+print(mem.recall("goal"))   # → "Summarize the quarterly report"
+print(mem.all())            # → all memories for this agent
 ```
 
 ---
@@ -157,17 +167,24 @@ Direct access to your own base. Token scope: `full`.
 ### `HiveClient(base_url, token)`
 Access to another user's base via a shared `basekey`. Token scope: `hive`.
 
-### `Memory(client, table_id, basekey=None, agent=None)`
+### `Memory(client, table_id, basekey=None, agent_col="agent", agent=None)`
 
 | Method | Description |
 |---|---|
 | `remember(key, value)` | Store or update a memory |
 | `recall(key)` | Retrieve a value by key |
 | `forget(key)` | Delete a memory |
-| `search(text)` | Full-text search across keys and values |
-| `all()` | Return all memories (filtered by agent if set) |
+| `search(text)` | Search across keys and values |
+| `all()` | All memories (filtered by agent if set) |
 
-### `HiveClient` workflow methods
+### HIVE naming conventions
+
+APIBASE enforces strict naming rules. Memory keys must follow the same conventions:
+- No underscores — underscore is reserved for `id_x` (primary key) and `x_id` (foreign key)
+- Use `username` not `user_name`, `userlang` not `user_lang`
+- Dot notation for composed meaning: `created.at`, `total.amount`
+
+### `HiveClient` workflow
 
 | Method | Description |
 |---|---|
@@ -177,6 +194,12 @@ Access to another user's base via a shared `basekey`. Token scope: `hive`.
 
 ---
 
-## License
+## Built on APIBASE
 
-MIT — see [apibase.work](https://apibase.work)
+[APIBASE](https://apibase.work) is a structured data platform with a REST API. File-based, schema-flexible, no database server required. Each user owns their data entirely.
+
+This SDK turns any APIBASE base into persistent memory for AI agents — readable by humans, queryable by machines, shareable across a fleet via HIVE.
+
+---
+
+*MIT License — [apibase.work](https://apibase.work)*

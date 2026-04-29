@@ -1,0 +1,396 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>apibase-py — AI Agent Memory</title>
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+      background: #f8fafc;
+      color: #1e293b;
+      line-height: 1.7;
+    }
+
+    /* HERO */
+    .hero {
+      background: linear-gradient(135deg, #0f172a 0%, #1e3a5f 100%);
+      color: #fff;
+      padding: 80px 24px;
+      text-align: center;
+    }
+    .hero h1 {
+      font-size: clamp(2rem, 5vw, 3.5rem);
+      font-weight: 800;
+      letter-spacing: -0.02em;
+      line-height: 1.15;
+      margin-bottom: 20px;
+    }
+    .hero h1 span { color: #60a5fa; }
+    .hero p {
+      font-size: 1.2rem;
+      color: #94a3b8;
+      max-width: 620px;
+      margin: 0 auto 36px;
+    }
+    .hero-code {
+      background: #0f172a;
+      border: 1px solid #1e3a5f;
+      border-radius: 12px;
+      padding: 28px 32px;
+      text-align: left;
+      max-width: 560px;
+      margin: 0 auto;
+      font-family: 'Fira Code', 'Cascadia Code', monospace;
+      font-size: 0.9rem;
+      line-height: 1.8;
+    }
+    .hero-code .kw  { color: #60a5fa; }
+    .hero-code .fn  { color: #34d399; }
+    .hero-code .st  { color: #fbbf24; }
+    .hero-code .cm  { color: #475569; }
+
+    /* SECTIONS */
+    section { padding: 72px 24px; max-width: 860px; margin: 0 auto; }
+    section + section { border-top: 1px solid #e2e8f0; }
+
+    h2 {
+      font-size: 1.75rem;
+      font-weight: 700;
+      color: #0f172a;
+      margin-bottom: 16px;
+      letter-spacing: -0.01em;
+    }
+    h3 {
+      font-size: 1.1rem;
+      font-weight: 600;
+      color: #1e293b;
+      margin: 28px 0 10px;
+    }
+    p { margin-bottom: 16px; color: #475569; }
+    strong { color: #1e293b; }
+
+    /* PROBLEM CARDS */
+    .cards {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+      gap: 20px;
+      margin: 32px 0;
+    }
+    .card {
+      background: #fff;
+      border: 1px solid #e2e8f0;
+      border-radius: 12px;
+      padding: 24px;
+    }
+    .card-icon { font-size: 1.8rem; margin-bottom: 12px; }
+    .card h4 { font-size: 1rem; font-weight: 600; color: #0f172a; margin-bottom: 8px; }
+    .card p { font-size: 0.9rem; margin: 0; }
+    .card.bad { border-left: 3px solid #f87171; }
+    .card.good { border-left: 3px solid #34d399; }
+
+    /* CODE BLOCKS */
+    pre {
+      background: #0f172a;
+      color: #e2e8f0;
+      border-radius: 10px;
+      padding: 24px;
+      overflow-x: auto;
+      font-family: 'Fira Code', 'Cascadia Code', monospace;
+      font-size: 0.875rem;
+      line-height: 1.8;
+      margin: 20px 0;
+    }
+    code { font-family: inherit; }
+    .kw  { color: #60a5fa; }
+    .fn  { color: #34d399; }
+    .st  { color: #fbbf24; }
+    .cm  { color: #64748b; }
+    .nb  { color: #f472b6; }
+
+    /* HIVE DIAGRAM */
+    .hive-diagram {
+      background: #fff;
+      border: 1px solid #e2e8f0;
+      border-radius: 12px;
+      padding: 32px;
+      margin: 28px 0;
+      font-family: 'Fira Code', monospace;
+      font-size: 0.875rem;
+      line-height: 2;
+      color: #334155;
+    }
+    .hive-boss { color: #2563eb; font-weight: 700; }
+    .hive-worker { color: #059669; }
+    .hive-readonly { color: #d97706; }
+
+    /* TABLE */
+    table {
+      width: 100%;
+      border-collapse: collapse;
+      margin: 20px 0;
+      font-size: 0.9rem;
+    }
+    th {
+      text-align: left;
+      padding: 10px 14px;
+      background: #f1f5f9;
+      color: #475569;
+      font-weight: 600;
+      border-bottom: 1px solid #e2e8f0;
+    }
+    td {
+      padding: 10px 14px;
+      border-bottom: 1px solid #f1f5f9;
+      color: #334155;
+    }
+    td code {
+      background: #f1f5f9;
+      padding: 2px 6px;
+      border-radius: 4px;
+      font-family: monospace;
+      font-size: 0.85rem;
+    }
+
+    /* STEPS */
+    .steps { counter-reset: step; margin: 28px 0; }
+    .step {
+      display: flex;
+      gap: 20px;
+      margin-bottom: 24px;
+      align-items: flex-start;
+    }
+    .step-num {
+      counter-increment: step;
+      min-width: 36px;
+      height: 36px;
+      border-radius: 50%;
+      background: #2563eb;
+      color: #fff;
+      font-weight: 700;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 0.9rem;
+      flex-shrink: 0;
+    }
+    .step-content h4 { font-weight: 600; color: #0f172a; margin-bottom: 4px; }
+    .step-content p { margin: 0; font-size: 0.9rem; }
+
+    /* FOOTER */
+    footer {
+      text-align: center;
+      padding: 40px 24px;
+      background: #0f172a;
+      color: #475569;
+      font-size: 0.875rem;
+    }
+    footer a { color: #60a5fa; text-decoration: none; }
+    footer a:hover { text-decoration: underline; }
+
+    /* BADGE */
+    .badge {
+      display: inline-block;
+      background: #dbeafe;
+      color: #1d4ed8;
+      font-size: 0.75rem;
+      font-weight: 600;
+      padding: 3px 10px;
+      border-radius: 999px;
+      margin-bottom: 20px;
+      letter-spacing: 0.05em;
+      text-transform: uppercase;
+    }
+
+    .highlight-box {
+      background: #eff6ff;
+      border-left: 4px solid #2563eb;
+      border-radius: 0 8px 8px 0;
+      padding: 20px 24px;
+      margin: 24px 0;
+    }
+    .highlight-box p { margin: 0; color: #1e40af; font-weight: 500; }
+  </style>
+</head>
+<body>
+
+<!-- HERO -->
+<div class="hero">
+  <div class="badge">Open Source · Python SDK</div>
+  <h1>AI agents forget everything.<br><span>APIBASE gives them memory</span><br>that humans can read.</h1>
+  <p>Persistent, structured, auditable memory for AI agents — backed by APIBASE, visible in a browser.</p>
+  <div class="hero-code">
+    <div><span class="kw">from</span> apibase <span class="kw">import</span> ApibaseClient, Memory</div>
+    <div>&nbsp;</div>
+    <div>client = <span class="fn">ApibaseClient</span>(<span class="st">"https://apibase.work"</span>, token)</div>
+    <div>mem &nbsp; = <span class="fn">Memory</span>(client, table_id=<span class="nb">30</span>)</div>
+    <div>&nbsp;</div>
+    <div>mem.<span class="fn">remember</span>(<span class="st">"username"</span>, <span class="st">"Pierre"</span>)</div>
+    <div>mem.<span class="fn">recall</span>(<span class="st">"username"</span>) &nbsp;<span class="cm"># → "Pierre"</span></div>
+    <div>mem.<span class="fn">forget</span>(<span class="st">"username"</span>)</div>
+    <div>mem.<span class="fn">search</span>(<span class="st">"Pierre"</span>) &nbsp;&nbsp;<span class="cm"># → matching records</span></div>
+  </div>
+</div>
+
+<!-- WHY -->
+<section>
+  <h2>The problem with AI agent memory today</h2>
+  <p>Every session, your agent starts from zero. It doesn't remember the user's name, last week's findings, or the decision it made yesterday. The workarounds are painful — and none of them let you see what the agent actually knows.</p>
+
+  <div class="cards">
+    <div class="card bad">
+      <div class="card-icon">🔒</div>
+      <h4>Vector stores</h4>
+      <p>Embeddings that no human can read. When the agent builds a wrong belief, you can't fix it because you can't see it.</p>
+    </div>
+    <div class="card bad">
+      <div class="card-icon">📄</div>
+      <h4>JSON files</h4>
+      <p>Flat, no structure, no querying, no history. Fine for toy projects, painful at scale.</p>
+    </div>
+    <div class="card bad">
+      <div class="card-icon">❌</div>
+      <h4>Nothing</h4>
+      <p>The most common solution. Every session is a blank slate. The agent never learns.</p>
+    </div>
+    <div class="card good">
+      <div class="card-icon">✅</div>
+      <h4>APIBASE</h4>
+      <p>Every memory is a row in a real table. A human can open it, read it, correct it, and understand it instantly.</p>
+    </div>
+  </div>
+
+  <div class="highlight-box">
+    <p>The agent and the human work on the same data. That's the architecture — not an add-on.</p>
+  </div>
+</section>
+
+<!-- TLC -->
+<section>
+  <h2>Why AI agents love TLC addressing</h2>
+  <p>APIBASE uses a deterministic address for every piece of data: <strong>T{table} / L{line} / C{column}</strong>. No ambiguity. No hallucination. An LLM can construct a valid query without guessing.</p>
+
+<pre><code><span class="cm"># Every cell in your base has an exact address</span>
+T30/L1/C2         <span class="cm"># one cell: memorys, line 1, column "memory"</span>
+T30/L             <span class="cm"># all records in memorys</span>
+T30/L/C2/O1?V=x   <span class="cm"># records where memory = x</span></code></pre>
+
+  <p>The address space is fully enumerable and self-consistent. This is why agents navigate it naturally — and why it works where other APIs fail.</p>
+</section>
+
+<!-- HIVE -->
+<section>
+  <h2>HIVE — a fleet of agents with shared memory</h2>
+  <p>APIBASE includes a HIVE system for multi-agent architectures. A <strong>boss agent</strong> owns the master base. Worker agents connect to it via a shared key and write their findings directly. The boss reads everything. The human sees everything.</p>
+
+  <div class="hive-diagram">
+    <div class="hive-boss">Boss agent (full token)</div>
+    <div>&nbsp;&nbsp;&nbsp;&nbsp;└── owns the master base</div>
+    <div>&nbsp;&nbsp;&nbsp;&nbsp;└── controls who can read, write, edit</div>
+    <div>&nbsp;</div>
+    <div class="hive-worker">Worker "research" (hive token — read + add)</div>
+    <div>&nbsp;&nbsp;&nbsp;&nbsp;└── writes findings into boss memory</div>
+    <div>&nbsp;&nbsp;&nbsp;&nbsp;└── cannot edit or delete what boss wrote</div>
+    <div>&nbsp;</div>
+    <div class="hive-readonly">Worker "analyst" (hive token — read only)</div>
+    <div>&nbsp;&nbsp;&nbsp;&nbsp;└── reads directives from boss</div>
+    <div>&nbsp;&nbsp;&nbsp;&nbsp;└── cannot write</div>
+  </div>
+
+<pre><code><span class="kw">from</span> apibase <span class="kw">import</span> ApibaseClient, HiveClient, Memory
+
+<span class="cm"># Boss reads and writes its own base</span>
+boss = <span class="fn">ApibaseClient</span>(<span class="st">"https://apibase.work"</span>, full_token)
+mem  = <span class="fn">Memory</span>(boss, table_id=<span class="nb">30</span>, agent_col=<span class="st">"username"</span>, agent=<span class="st">"boss"</span>)
+
+<span class="cm"># Worker writes into boss base via HIVE</span>
+worker  = <span class="fn">HiveClient</span>(<span class="st">"https://apibase.work"</span>, hive_token)
+mem_w   = <span class="fn">Memory</span>(worker, table_id=<span class="nb">30</span>, basekey=<span class="st">"claude"</span>, agent=<span class="st">"research"</span>)
+
+mem_w.<span class="fn">remember</span>(<span class="st">"finding01"</span>, <span class="st">"Revenue spike detected on 2026-04-15"</span>)
+mem.<span class="fn">search</span>(<span class="st">"spike"</span>)  <span class="cm"># boss finds it immediately</span></code></pre>
+
+  <p>Every write is visible in real time through the APIBASE interface. You know which agent wrote what, when, and why.</p>
+</section>
+
+<!-- QUICKSTART -->
+<section>
+  <h2>Quick start</h2>
+
+  <div class="steps">
+    <div class="step">
+      <div class="step-num">1</div>
+      <div class="step-content">
+        <h4>Create an account</h4>
+        <p>Sign up at <a href="https://apibase.work">apibase.work</a>. Free to start.</p>
+      </div>
+    </div>
+    <div class="step">
+      <div class="step-num">2</div>
+      <div class="step-content">
+        <h4>Create a <code>memorys</code> table</h4>
+        <p>Add 4 columns in order: <code>id_memory</code> · <code>memory</code> · <code>username</code> · <code>value</code></p>
+      </div>
+    </div>
+    <div class="step">
+      <div class="step-num">3</div>
+      <div class="step-content">
+        <h4>Generate a token</h4>
+        <p>Scope: <code>full</code>. Note your table ID from the Table overview panel.</p>
+      </div>
+    </div>
+    <div class="step">
+      <div class="step-num">4</div>
+      <div class="step-content">
+        <h4>Install and run</h4>
+        <p><code>pip install requests</code> then clone <a href="https://github.com/PierreDragon/apibase-py">apibase-py</a>.</p>
+      </div>
+    </div>
+  </div>
+
+<pre><code><span class="kw">from</span> apibase <span class="kw">import</span> ApibaseClient, Memory
+
+client = <span class="fn">ApibaseClient</span>(<span class="st">"https://apibase.work"</span>, <span class="st">"your-token"</span>)
+mem    = <span class="fn">Memory</span>(client, table_id=YOUR_TABLE_ID, agent_col=<span class="st">"username"</span>, agent=<span class="st">"myagent"</span>)
+
+mem.<span class="fn">remember</span>(<span class="st">"goal"</span>, <span class="st">"Summarize the quarterly report"</span>)
+<span class="nb">print</span>(mem.<span class="fn">recall</span>(<span class="st">"goal"</span>))   <span class="cm"># → "Summarize the quarterly report"</span>
+<span class="nb">print</span>(mem.<span class="fn">all</span>())            <span class="cm"># → all memories for this agent</span></code></pre>
+</section>
+
+<!-- API REFERENCE -->
+<section>
+  <h2>API reference</h2>
+
+  <h3>Memory methods</h3>
+  <table>
+    <tr><th>Method</th><th>Description</th></tr>
+    <tr><td><code>remember(key, value)</code></td><td>Store or update a memory</td></tr>
+    <tr><td><code>recall(key)</code></td><td>Retrieve a value by key</td></tr>
+    <tr><td><code>forget(key)</code></td><td>Delete a memory</td></tr>
+    <tr><td><code>search(text)</code></td><td>Search across keys and values</td></tr>
+    <tr><td><code>all()</code></td><td>All memories (filtered by agent if set)</td></tr>
+  </table>
+
+  <h3>HIVE workflow</h3>
+  <table>
+    <tr><th>Method</th><th>Description</th></tr>
+    <tr><td><code>request(basekey, table_id)</code></td><td>Request access to a table</td></tr>
+    <tr><td><code>approve(basekey, id_hive)</code></td><td>Approve a pending request</td></tr>
+    <tr><td><code>publish(basekey, id_hive)</code></td><td>Push a data snapshot to the requester</td></tr>
+  </table>
+
+  <h3>Naming conventions</h3>
+  <p>APIBASE enforces strict naming. Memory keys must follow the same rules — no underscores (reserved for <code>id_x</code> and <code>x_id</code>). Use <code>username</code> not <code>user_name</code>, dot notation for composed meaning: <code>created.at</code>.</p>
+</section>
+
+<!-- FOOTER -->
+<footer>
+  <p>apibase-py is built on <a href="https://apibase.work">APIBASE</a> — structured data platform, file-based, no database server required.</p>
+  <p style="margin-top:8px"><a href="https://github.com/PierreDragon/apibase-py">GitHub</a> · MIT License</p>
+</footer>
+
+</body>
+</html>
