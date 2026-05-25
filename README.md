@@ -140,22 +140,28 @@ pip install -e .
 | 3 | `username` | Which agent stored it |
 | 4 | `value` | The stored value |
 
-**3. Generate a token** (scope: `full`) in your account settings.
+> `table_id=30` is fixed — `memorys` is globally registered as GID.30 on apibase.work. Every user who creates this table gets the same ID automatically.
 
-**4. Run:**
+**3. Enable HIVE on your base** in your base settings.
+
+**4. Grant ACL on `memorys` to Claude:**
+
+In your base's ACL settings, add access for token **id 17 — "Claude for HIVE"** with **read + write** permissions on the `memorys` table.
+
+This is the shared Claude HIVE token. It can only access tables you explicitly grant it to.
+
+**5. Run:**
 
 ```python
-from apibase import ApibaseClient, Memory
+from apibase import HiveClient, Memory
 
-client = ApibaseClient("https://apibase.work", "your-token")
-mem    = Memory(client, table_id=30, agent_col="username", agent="myagent")
+hive = HiveClient("https://apibase.work", "<claude-hive-token>")
+mem  = Memory(hive, table_id=30, basekey="your-basekey", agent_col="username", agent="claude")
 
 mem.remember("goal", "Summarize the quarterly report")
 print(mem.recall("goal"))   # → "Summarize the quarterly report"
 print(mem.all())            # → all memories for this agent
 ```
-
-> `table_id=30` is fixed — `memorys` is globally registered as GID.30 on apibase.work. Every user who creates this table gets the same ID automatically.
 
 ---
 
@@ -163,21 +169,28 @@ print(mem.all())            # → all memories for this agent
 
 No code required. The MCP server exposes every APIBASE operation as a tool Claude can call directly in conversation.
 
-### Setup
+### How it works
 
-**1. Install dependencies:**
+Each user owns their own isolated base on apibase.work. Claude connects to it via the HIVE system using a single shared token — **id 17, "Claude for HIVE"** — that you explicitly grant access to. Your memories stay in your base. No one else can read or write them.
 
-```bash
-pip install mcp httpx
+```
+Your base (apibase.work)
+  └── memorys table (T=30)
+        └── ACL: Claude for HIVE → read + write
+              └── Claude reads and writes only your memories
 ```
 
-Or with the included requirements file:
+### Setup
+
+**1. Complete the Quick start steps above** (create account, create `memorys` table, enable HIVE, grant ACL to id 17).
+
+**2. Install dependencies:**
 
 ```bash
 pip install -r requirements.txt
 ```
 
-**2. Add to your Claude config** (`claude_desktop_config.json` for Claude Desktop, or `.claude/settings.json` for Claude Code):
+**3. Add to your Claude config** (`claude_desktop_config.json` for Claude Desktop, or `.claude/settings.json` for Claude Code):
 
 ```json
 {
@@ -186,7 +199,7 @@ pip install -r requirements.txt
       "command": "python",
       "args": ["/path/to/apibase-py/server.py"],
       "env": {
-        "APIBASE_TOKEN": "your-full-token",
+        "APIBASE_HIVE_TOKEN": "<claude-hive-token>",
         "APIBASE_BASE": "your-basekey"
       }
     }
@@ -194,7 +207,9 @@ pip install -r requirements.txt
 }
 ```
 
-**3. Start a conversation.** Claude now has 8 tools: `apibase_schema`, `apibase_query`, `apibase_get_cell`, `apibase_get_record`, `apibase_post`, `apibase_put_cell`, `apibase_put_line`, `apibase_delete`.
+`APIBASE_BASE` is your own base key — the name you chose when creating your base. `APIBASE_HIVE_TOKEN` is the Claude shared token (obtained from apibase.work when you add ACL id 17).
+
+**4. Start a conversation.** Claude now has 8 tools and will read and write your `memorys` table automatically.
 
 ### How Claude uses the memory table
 
@@ -213,28 +228,6 @@ Claude resolves the schema once, then reads and writes autonomously:
 ```
 
 You can open your APIBASE table at any moment and see exactly what Claude remembered, correct a wrong value, or inject a new fact before the next session.
-
-### HIVE — multi-agent MCP
-
-To give Claude access to another user's base (boss/worker pattern), add a `APIBASE_HIVE_TOKEN`:
-
-```json
-{
-  "mcpServers": {
-    "apibase": {
-      "command": "python",
-      "args": ["/path/to/apibase-py/server.py"],
-      "env": {
-        "APIBASE_TOKEN": "your-full-token",
-        "APIBASE_HIVE_TOKEN": "shared-hive-token",
-        "APIBASE_BASE": "your-basekey"
-      }
-    }
-  }
-}
-```
-
-When calling any tool with a `base` parameter different from `APIBASE_BASE`, the server automatically routes through HIVE using `APIBASE_HIVE_TOKEN`. The boss sees every write in real time.
 
 ### Available MCP tools
 
