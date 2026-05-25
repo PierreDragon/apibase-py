@@ -159,6 +159,99 @@ print(mem.all())            # → all memories for this agent
 
 ---
 
+## Use with Claude (MCP server)
+
+No code required. The MCP server exposes every APIBASE operation as a tool Claude can call directly in conversation.
+
+### Setup
+
+**1. Install dependencies:**
+
+```bash
+pip install mcp httpx
+```
+
+Or with the included requirements file:
+
+```bash
+pip install -r requirements.txt
+```
+
+**2. Add to your Claude config** (`claude_desktop_config.json` for Claude Desktop, or `.claude/settings.json` for Claude Code):
+
+```json
+{
+  "mcpServers": {
+    "apibase": {
+      "command": "python",
+      "args": ["/path/to/apibase-py/server.py"],
+      "env": {
+        "APIBASE_TOKEN": "your-full-token",
+        "APIBASE_BASE": "your-basekey"
+      }
+    }
+  }
+}
+```
+
+**3. Start a conversation.** Claude now has 8 tools: `apibase_schema`, `apibase_query`, `apibase_get_cell`, `apibase_get_record`, `apibase_post`, `apibase_put_cell`, `apibase_put_line`, `apibase_delete`.
+
+### How Claude uses the memory table
+
+Claude resolves the schema once, then reads and writes autonomously:
+
+```
+1. apibase_schema(table="memorys")
+   → T=30, C2="memory", C3="username", C4="value"
+
+2. apibase_query(T=30, C=2, operator=1, value="goal")
+   → checks if the memory key already exists
+
+3a. New memory → apibase_post(T=30, record='{"memory":"goal","value":"...","username":"claude"}')
+3b. Update     → apibase_put_cell(T=30, id=5, C=4, value="updated value")
+3c. Forget     → apibase_delete(T=30, id=5)
+```
+
+You can open your APIBASE table at any moment and see exactly what Claude remembered, correct a wrong value, or inject a new fact before the next session.
+
+### HIVE — multi-agent MCP
+
+To give Claude access to another user's base (boss/worker pattern), add a `APIBASE_HIVE_TOKEN`:
+
+```json
+{
+  "mcpServers": {
+    "apibase": {
+      "command": "python",
+      "args": ["/path/to/apibase-py/server.py"],
+      "env": {
+        "APIBASE_TOKEN": "your-full-token",
+        "APIBASE_HIVE_TOKEN": "shared-hive-token",
+        "APIBASE_BASE": "your-basekey"
+      }
+    }
+  }
+}
+```
+
+When calling any tool with a `base` parameter different from `APIBASE_BASE`, the server automatically routes through HIVE using `APIBASE_HIVE_TOKEN`. The boss sees every write in real time.
+
+### Available MCP tools
+
+| Tool | Description |
+|---|---|
+| `apibase_schema` | Resolve table id and column ids by name |
+| `apibase_query` | Search rows by column value and operator |
+| `apibase_get_record` | Get one full record by primary id |
+| `apibase_get_cell` | Get one cell by TLC coordinate |
+| `apibase_post` | Insert a new record |
+| `apibase_put_cell` | Update one cell (preferred for agents) |
+| `apibase_put_line` | Replace a full record |
+| `apibase_delete` | Delete a record |
+| `apibase_debug` | Verify token and env configuration |
+
+---
+
 ## API reference
 
 ### `ApibaseClient(base_url, token)`
