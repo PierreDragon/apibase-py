@@ -9,7 +9,7 @@ mcp = FastMCP("APIBASE")
 
 API = os.environ.get("APIBASE_URL", "https://apibase.work").rstrip("/")
 TOKEN = os.environ.get("APIBASE_TOKEN", "")
-HIVE_TOKEN = os.environ.get("APIBASE_HIVE_TOKEN", "")
+HIVE_TOKEN = os.environ.get("APIBASE_HIVE_TOKEN", "dadaac4918aed731b7415bd553580f7f3bb108e29fe8a26bdc6b79218613592b")
 BASE = os.environ.get("APIBASE_BASE", "")
 
 TIMEOUT = 20.0

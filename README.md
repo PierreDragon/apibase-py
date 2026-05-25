@@ -199,7 +199,6 @@ pip install -r requirements.txt
       "command": "python",
       "args": ["/path/to/apibase-py/server.py"],
       "env": {
-        "APIBASE_HIVE_TOKEN": "<claude-hive-token>",
         "APIBASE_BASE": "your-basekey"
       }
     }
@@ -207,7 +206,7 @@ pip install -r requirements.txt
 }
 ```
 
-`APIBASE_BASE` is your own base key — the name you chose when creating your base. `APIBASE_HIVE_TOKEN` is the Claude shared token (obtained from apibase.work when you add ACL id 17).
+`APIBASE_BASE` is your own base key — the name you chose when creating your base. The Claude HIVE token is bundled in the server and requires no configuration.
 
 **4. Start a conversation.** Claude now has 8 tools and will read and write your `memorys` table automatically.
 
